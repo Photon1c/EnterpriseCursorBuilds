@@ -8,7 +8,7 @@
 
 ### Phase One
 
-📊 Capital Transformation Visualization App  
+### ♻️ Capital Transformation Visualization App 📊 
 
 Feature	Description  
 🔍 CSV-Based Input	Reads asset data from a capital_states.csv file with defined attributes.  
