@@ -1,0 +1,11 @@
+Asset,State,Category,Liquidity,Volatility,Catalyst
+Cash,Liquid,Currency,9,2,Liquidity Influx
+Real Estate,Solid,Physical Asset,2,1,Access to Credit
+NFTs,Plasma,Digital Speculative,3,9,Market Hype
+Brand Equity,Gas,Intangible,1,3,Narrative Framing
+Stocks,Liquid,Public Equity,8,5,Market Hype
+Startups,Plasma,Pre-IPO,4,8,Innovation
+Patent,Gaseous,Intellectual Property,2,3,Innovation
+Private Equity,Solid,Investment,3,2,Access to Credit
+Crypto Token,Plasma,Digital Asset,5,10,Speculation
+Open Source Project,Gas,Knowledge Capital,2,4,Network Effects
