@@ -1,12 +1,12 @@
-Cloud Rain Soil Capital Model  
+# Cloud Rain Soil Capital Model  
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Last Update](https://img.shields.io/badge/Updated-March_2025-orange)
-![Build](https://img.shields.io/badge/Build-Passing-brightgreen)
+![Build](https://img.shields.io/badge/Build-Passing-brightgreen)  
 
-Capital-State Transformation Framework
+## Capital-State Transformation Framework
 
-# Phase One
+### Phase One
 
 📊 Capital Transformation Visualization App
 Feature	Description
