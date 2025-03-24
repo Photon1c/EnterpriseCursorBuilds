@@ -10,7 +10,8 @@
 
 ### ♻️ Capital Transformation Visualization App 📊 
 
-Feature	Description  
+### Feature	Description  
+
 🔍 CSV-Based Input	Reads asset data from a capital_states.csv file with defined attributes.  
 
 🌈 Bubble Chart	Visualizes assets by Liquidity (x-axis) and Volatility (y-axis), colored by State.  
