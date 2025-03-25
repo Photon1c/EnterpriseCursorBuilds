@@ -9,4 +9,4 @@ The [Immune System Simulator](https://github.com/Photon1c/EnterpriseCursorBuilds
 
 The [Capital State Transformation Model](https://github.com/Photon1c/EnterpriseCursorBuilds/tree/main/cloud-rain-soil-capital-model) is a WIP scaffold for a working MacroAgent, currently a private repository.  
 
-The [Grid Fx Wireframe Overlays](https://github.com/Photon1c/EnterpriseCursorBuilds/tree/main/GridFx-WireframeOverlays) are a cool project to develop Tron and Escape From New York themed graphics using different methods. Try viewing the HTML pages by serving them locally, or the python scripts for AR images and video graphical rendering. This is a work in progress with lots of promising applications (medical, financial , logistical, etc)
+The [Grid Fx Wireframe Overlays](https://github.com/Photon1c/EnterpriseCursorBuilds/tree/main/GridFx-WireframeOverlays) is a cool project to develop Tron and Escape From New York themed graphics using different methods. Try viewing the HTML pages by serving them locally, or the python scripts for AR images and video graphical rendering. This is a work in progress with lots of promising applications (medical, financial , logistical, etc)
