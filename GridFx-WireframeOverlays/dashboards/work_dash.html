@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #00ffff;
+            --secondary-color: #00ff00;
+            --background-color: #000;
+            --text-color: #00ffff;
+            --border-color: #00ffff;
+            --terminal-bg: rgba(0, 0, 0, 0.9);
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .module {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .module-title {
+            font-size: 1.2em;
+            color: var(--primary-color);
+            text-shadow: 0 0 5px var(--primary-color);
+        }
+
+        .module-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--primary-color);
+            color: var(--background-color);
+        }
+
+        .terminal {
+            grid-column: 1 / -1;
+            height: 300px;
+            background: var(--terminal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            margin: 5px 0;
+            color: var(--text-color);
+        }
+
+        .terminal-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terminal-prompt {
+            color: var(--secondary-color);
+        }
+
+        .terminal-input input {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            flex-grow: 1;
+            outline: none;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: var(--secondary-color);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: var(--secondary-color);
+            box-shadow: 0 0 5px var(--secondary-color);
+        }
+
+        .status-offline {
+            background: #ff0000;
+            box-shadow: 0 0 5px #ff0000;
+        }
+
+        .system-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="system-status">
+        <span class="status-indicator status-online"></span>
+        SYSTEM ONLINE
+    </div>
+
+    <div class="dashboard">
+        <div class="module">
+            <div class="module-header">
+                <div class="module-title">DATA UPLOAD</div>
+                <div class="module-controls">
+                    <button class="btn" onclick="clearData()">Clear</button>
+                </div>
+            </div>
+            <div class="upload-area" id="upload-area">
+                <input type="file" id="file-input" accept=".csv" style="display: none">
+                <div>DRAG & DROP CSV FILE HERE</div>
+                <div>or</div>
+                <button class="btn" onclick="document.getElementById('file-input').click()">Browse Files</button>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <div class="module-title">PERFORMANCE METRICS</div>
+                <div class="module-controls">
+                    <button class="btn" onclick="refreshMetrics()">Refresh</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="metrics-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <div class="module-title">DATA TABLE</div>
+                <div class="module-controls">
+                    <button class="btn" onclick="exportData()">Export</button>
+                </div>
+            </div>
+            <div id="table-container">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Value</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>001</td>
+                            <td>Sample Data</td>
+                            <td>Active</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="module">
+            <div class="module-header">
+                <div class="module-title">ANALYTICS</div>
+                <div class="module-controls">
+                    <button class="btn" onclick="toggleAnalytics()">Toggle View</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="analytics-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="terminal">
+            <div class="terminal-content" id="terminal-content">
+                <div class="terminal-line">ESCAPE DASHBOARD v1.0</div>
+                <div class="terminal-line">INITIALIZING SYSTEMS...</div>
+            </div>
+            <div class="terminal-input">
+                <span class="terminal-prompt">></span>
+                <input type="text" id="terminal-input" placeholder="Enter command..." onkeypress="handleTerminalInput(event)">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        const metricsCtx = document.getElementById('metrics-chart').getContext('2d');
+        const analyticsCtx = document.getElementById('analytics-chart').getContext('2d');
+
+        const metricsChart = new Chart(metricsCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Performance',
+                    data: [65, 59, 80, 81, 56, 55],
+                    borderColor: '#00ffff',
+                    backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#00ffff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#00ffff'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#00ffff'
+                        }
+                    }
+                }
+            }
+        });
+
+        const analyticsChart = new Chart(analyticsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['A', 'B', 'C', 'D', 'E'],
+                datasets: [{
+                    label: 'Analytics',
+                    data: [12, 19, 3, 5, 2],
+                    backgroundColor: 'rgba(0, 255, 255, 0.5)',
+                    borderColor: '#00ffff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#00ffff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#00ffff'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#00ffff'
+                        }
+                    }
+                }
+            }
+        });
+
+        // File upload handling
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#00ff00';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#00ffff';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#00ffff';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'text/csv') {
+                handleFileUpload(file);
+            } else {
+                logToTerminal('ERROR: Invalid file type. Please upload a CSV file.');
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        });
+
+        function handleFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const csv = e.target.result;
+                parseCSV(csv);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',');
+            const data = lines.slice(1).map(line => line.split(','));
+            
+            // Update table
+            updateTable(headers, data);
+            
+            // Update charts
+            updateCharts(data);
+            
+            logToTerminal('SUCCESS: Data uploaded and processed successfully.');
+        }
+
+        function updateTable(headers, data) {
+            const table = document.getElementById('data-table');
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            
+            // Update headers
+            thead.innerHTML = headers.map(header => `<th>${header}</th>`).join('');
+            
+            // Update data
+            tbody.innerHTML = data.map(row => 
+                `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+            ).join('');
+        }
+
+        function updateCharts(data) {
+            // Update metrics chart
+            metricsChart.data.labels = data.map(row => row[0]);
+            metricsChart.data.datasets[0].data = data.map(row => parseFloat(row[1]));
+            metricsChart.update();
+
+            // Update analytics chart
+            analyticsChart.data.labels = data.map(row => row[0]);
+            analyticsChart.data.datasets[0].data = data.map(row => parseFloat(row[2]));
+            analyticsChart.update();
+        }
+
+        // Terminal functionality
+        function logToTerminal(message) {
+            const terminalContent = document.getElementById('terminal-content');
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.textContent = message;
+            terminalContent.appendChild(line);
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+
+        function handleTerminalInput(event) {
+            if (event.key === 'Enter') {
+                const input = document.getElementById('terminal-input');
+                const command = input.value.trim();
+                
+                logToTerminal(`> ${command}`);
+                processCommand(command);
+                
+                input.value = '';
+            }
+        }
+
+        function processCommand(command) {
+            const cmd = command.toLowerCase();
+            
+            switch(cmd) {
+                case 'help':
+                    logToTerminal('Available commands:');
+                    logToTerminal('- help: Show this help message');
+                    logToTerminal('- clear: Clear terminal');
+                    logToTerminal('- refresh: Refresh all data');
+                    logToTerminal('- status: Show system status');
+                    break;
+                    
+                case 'clear':
+                    document.getElementById('terminal-content').innerHTML = '';
+                    logToTerminal('Terminal cleared.');
+                    break;
+                    
+                case 'refresh':
+                    refreshMetrics();
+                    logToTerminal('Data refreshed.');
+                    break;
+                    
+                case 'status':
+                    logToTerminal('System Status: ONLINE');
+                    logToTerminal('Last Update: ' + new Date().toLocaleTimeString());
+                    break;
+                    
+                default:
+                    logToTerminal('Unknown command. Type "help" for available commands.');
+            }
+        }
+
+        // Utility functions
+        function clearData() {
+            document.getElementById('data-table').querySelector('tbody').innerHTML = '';
+            metricsChart.data.datasets[0].data = [];
+            analyticsChart.data.datasets[0].data = [];
+            metricsChart.update();
+            analyticsChart.update();
+            logToTerminal('Data cleared.');
+        }
+
+        function refreshMetrics() {
+            // Simulate data refresh
+            const newData = Array.from({length: 6}, () => Math.floor(Math.random() * 100));
+            metricsChart.data.datasets[0].data = newData;
+            metricsChart.update();
+            logToTerminal('Metrics refreshed.');
+        }
+
+        function exportData() {
+            const table = document.getElementById('data-table');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const csv = rows.map(row => 
+                Array.from(row.querySelectorAll('th,td')).map(cell => cell.textContent).join(',')
+            ).join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard-data.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+            logToTerminal('Data exported to dashboard-data.csv');
+        }
+
+        function toggleAnalytics() {
+            const chartType = analyticsChart.config.type === 'bar' ? 'line' : 'bar';
+            analyticsChart.config.type = chartType;
+            analyticsChart.update();
+            logToTerminal(`Analytics view changed to ${chartType} chart.`);
+        }
+
+        // Initialize
+        logToTerminal('System initialized. Type "help" for available commands.');
+    </script>
+</body>
+</html> 
