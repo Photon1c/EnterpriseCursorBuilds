@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Earth - Interactive Globe</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: monospace;
+            background: #000;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-size: 24px;
+            text-shadow: 0 0 5px #00ff00;
+            z-index: 1000;
+        }
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-family: monospace;
+            text-shadow: 0 0 5px #00ff00;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="loading">INITIALIZING EARTH SYSTEMS...</div>
+    <div id="status">
+        <div>SYSTEM: <span id="system-status">ONLINE</span></div>
+        <div>ROTATION: <span id="rotation-status">0.00</span>°/s</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { FlyControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/FlyControls.js';
+        import EarthAgent from './agent_earth.js';
+        import { initializeEarth, spinEarth, stopEarth } from './underthehood/earth_controls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
+        camera.position.set(0, 0, 2000);
+        camera.lookAt(0, 0, 0);
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas'),
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Flight controls
+        const controls = new FlyControls(camera, renderer.domElement);
+        controls.movementSpeed = 100;
+        controls.rollSpeed = 0.5;
+        controls.dragToLook = true;
+
+        // Earth parameters
+        const EARTH_RADIUS = 1000;
+        const EARTH_SEGMENTS = 48;
+        const LINE_COLOR = 0x00ff00;
+
+        // Create Earth wireframe
+        const geometry = new THREE.SphereGeometry(EARTH_RADIUS, EARTH_SEGMENTS, EARTH_SEGMENTS);
+        const edges = new THREE.EdgesGeometry(geometry);
+        const material = new THREE.LineBasicMaterial({ color: LINE_COLOR });
+        const earth = new THREE.LineSegments(edges, material);
+        scene.add(earth);
+
+        // Initialize Earth Agent
+        const agent = new EarthAgent(scene, camera, controls);
+
+        // Add custom command handling
+        const originalHandleInput = agent.handleUserInput;
+        agent.handleUserInput = async function(input) {
+            const lowercaseInput = input.toLowerCase();
+            
+            // Check for Earth control commands
+            if (lowercaseInput.includes('spin')) {
+                this.addMessage('Agent', 'Initiating Earth rotation...');
+                spinEarth(earth);
+                document.getElementById('rotation-status').textContent = '1.00';
+            } else if (lowercaseInput.includes('stop')) {
+                this.addMessage('Agent', 'Stopping Earth rotation...');
+                stopEarth(earth);
+                document.getElementById('rotation-status').textContent = '0.00';
+            } else {
+                // Handle other commands with original function
+                await originalHandleInput.call(this, input);
+            }
+        };
+
+        // Animation loop
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            controls.update(delta);
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            document.getElementById('loading').style.display = 'none';
+            animate();
+        });
+    </script>
+</body>
+</html> 

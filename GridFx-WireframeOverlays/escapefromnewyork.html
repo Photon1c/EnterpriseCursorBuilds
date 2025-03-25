@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe City Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: monospace;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="color"] {
+            width: 50px;
+        }
+        #hud {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-family: monospace;
+            text-shadow: 0 0 5px #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <div class="control-group">
+            <label for="lineColor">Line Color:</label>
+            <input type="color" id="lineColor" value="#00ff00">
+        </div>
+        <div class="control-group">
+            <label for="gridColor">Grid Color:</label>
+            <input type="color" id="gridColor" value="#00ff00">
+        </div>
+        <div class="control-group">
+            Controls:<br>
+            WASD - Move<br>
+            Mouse - Look<br>
+            Q/E - Roll<br>
+            R/F - Up/Down
+        </div>
+    </div>
+    <div id="hud">
+        <div>ALT: <span id="altitude">0.00</span></div>
+        <div>SPD: <span id="speed">0.00</span></div>
+        <div>HDG: <span id="heading">000</span></div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { FlyControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/FlyControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 300, -1000);
+        camera.lookAt(0, 0, 0);
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas'),
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Materials
+        let lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+        let gridMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+
+        // City generation
+        function createBuilding(x, z, width, height, depth) {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const wireframe = new THREE.LineSegments(edges, lineMaterial);
+            wireframe.position.set(x, height/2, z);
+            return wireframe;
+        }
+
+        // Generate random buildings
+        const CITY_SIZE = 2000;
+        const GRID_DIVISIONS = 20;
+        for(let x = -CITY_SIZE/2; x < CITY_SIZE/2; x += CITY_SIZE/GRID_DIVISIONS) {
+            for(let z = -CITY_SIZE/2; z < CITY_SIZE/2; z += CITY_SIZE/GRID_DIVISIONS) {
+                if(Math.random() > 0.3) { // 70% chance of building
+                    const height = 50 + Math.random() * 300;
+                    const width = 30 + Math.random() * 50;
+                    const depth = 30 + Math.random() * 50;
+                    const building = createBuilding(
+                        x + (Math.random() - 0.5) * 50,
+                        z + (Math.random() - 0.5) * 50,
+                        width, height, depth
+                    );
+                    scene.add(building);
+                }
+            }
+        }
+
+        // Ground grid
+        const grid = new THREE.GridHelper(CITY_SIZE, GRID_DIVISIONS, 0x00ff00, 0x00ff00);
+        grid.material = gridMaterial;
+        scene.add(grid);
+
+        // Flight controls
+        const controls = new FlyControls(camera, renderer.domElement);
+        controls.movementSpeed = 100;
+        controls.rollSpeed = 0.5;
+        controls.dragToLook = true;
+
+        // Color control handlers
+        document.getElementById('lineColor').addEventListener('input', (e) => {
+            lineMaterial.color.setStyle(e.target.value);
+        });
+
+        document.getElementById('gridColor').addEventListener('input', (e) => {
+            gridMaterial.color.setStyle(e.target.value);
+        });
+
+        // HUD updates
+        function updateHUD() {
+            document.getElementById('altitude').textContent = camera.position.y.toFixed(2);
+            document.getElementById('speed').textContent = controls.movementSpeed.toFixed(2);
+            const heading = (Math.atan2(camera.getWorldDirection(new THREE.Vector3()).x, 
+                                      camera.getWorldDirection(new THREE.Vector3()).z) 
+                           * (180/Math.PI)).toFixed(0).padStart(3, '0');
+            document.getElementById('heading').textContent = heading;
+        }
+
+        // Animation loop
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            controls.update(delta);
+            updateHUD();
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRON Universe</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: "Orbitron", monospace;
+            background: #000;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+            border-radius: 5px;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="color"] {
+            width: 50px;
+            height: 25px;
+            border: none;
+            background: none;
+        }
+        #hud {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #00ffff;
+            font-family: "Orbitron", monospace;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: 1;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="grid-overlay"></div>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <div class="control-group">
+            <label for="primaryColor">Primary Color:</label>
+            <input type="color" id="primaryColor" value="#00ffff">
+        </div>
+        <div class="control-group">
+            <label for="secondaryColor">Secondary Color:</label>
+            <input type="color" id="secondaryColor" value="#ff0000">
+        </div>
+        <div class="control-group">
+            Controls:<br>
+            WASD - Move<br>
+            Mouse - Look<br>
+            Q/E - Roll<br>
+            R/F - Up/Down<br>
+            SHIFT - Boost
+        </div>
+    </div>
+    <div id="hud">
+        <div>SYSTEM: <span id="status">ONLINE</span></div>
+        <div>GRID: <span id="coordinates">0.00, 0.00, 0.00</span></div>
+        <div>SPEED: <span id="speed">0.00</span></div>
+        <div>ENERGY: <span id="energy">100%</span></div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { FlyControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/FlyControls.js';
+        import { EffectComposer } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.FogExp2(0x000000, 0.0008);
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 100, -500);
+        camera.lookAt(0, 0, 0);
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas'),
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+
+        // Post-processing
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5,   // strength
+            0.4,   // radius
+            0.85   // threshold
+        );
+        composer.addPass(bloomPass);
+
+        // Materials
+        let primaryColor = new THREE.Color(0x00ffff);
+        let secondaryColor = new THREE.Color(0xff0000);
+
+        const gridMaterial = new THREE.LineBasicMaterial({
+            color: primaryColor,
+            transparent: true,
+            opacity: 0.5
+        });
+
+        const buildingMaterial = new THREE.MeshLambertMaterial({
+            color: 0x000000,
+            emissive: primaryColor,
+            emissiveIntensity: 0.5
+        });
+
+        // Grid creation
+        const createGrid = () => {
+            const size = 2000;
+            const divisions = 100;
+            const gridHelper = new THREE.GridHelper(size, divisions, primaryColor, primaryColor);
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            return gridHelper;
+        };
+
+        // Add main grid
+        const mainGrid = createGrid();
+        scene.add(mainGrid);
+
+        // Create buildings
+        const createBuilding = (x, z, width, height, depth) => {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const building = new THREE.Group();
+
+            // Main building (black with emissive edges)
+            const mainMesh = new THREE.Mesh(geometry, buildingMaterial);
+            building.add(mainMesh);
+
+            // Glowing edges
+            const edgeMesh = new THREE.LineSegments(
+                edges,
+                new THREE.LineBasicMaterial({ color: primaryColor })
+            );
+            building.add(edgeMesh);
+
+            building.position.set(x, height/2, z);
+            return building;
+        };
+
+        // Generate city
+        const CITY_SIZE = 2000;
+        const GRID_DIVISIONS = 20;
+        for(let x = -CITY_SIZE/2; x < CITY_SIZE/2; x += CITY_SIZE/GRID_DIVISIONS) {
+            for(let z = -CITY_SIZE/2; z < CITY_SIZE/2; z += CITY_SIZE/GRID_DIVISIONS) {
+                if(Math.random() > 0.7) {
+                    const height = 50 + Math.random() * 300;
+                    const width = 20 + Math.random() * 40;
+                    const depth = 20 + Math.random() * 40;
+                    const building = createBuilding(
+                        x + (Math.random() - 0.5) * 50,
+                        z + (Math.random() - 0.5) * 50,
+                        width, height, depth
+                    );
+                    scene.add(building);
+                }
+            }
+        }
+
+        // Light trail system
+        class LightTrail {
+            constructor(color) {
+                this.positions = [];
+                this.maxPoints = 50;
+                this.geometry = new THREE.BufferGeometry();
+                this.material = new THREE.LineBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                this.line = new THREE.Line(this.geometry, this.material);
+                scene.add(this.line);
+            }
+
+            update(position) {
+                this.positions.push(position.x, position.y, position.z);
+                if (this.positions.length > this.maxPoints * 3) {
+                    this.positions.splice(0, 3);
+                }
+                this.geometry.setAttribute('position', 
+                    new THREE.Float32BufferAttribute(this.positions, 3));
+            }
+        }
+
+        // Create light trail
+        const trail = new LightTrail(primaryColor);
+
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+        scene.add(ambientLight);
+
+        // Flight controls
+        const controls = new FlyControls(camera, renderer.domElement);
+        controls.movementSpeed = 100;
+        controls.rollSpeed = 0.5;
+        controls.dragToLook = true;
+
+        // Color control handlers
+        document.getElementById('primaryColor').addEventListener('input', (e) => {
+            primaryColor.setStyle(e.target.value);
+            gridMaterial.color = primaryColor;
+            buildingMaterial.emissive = primaryColor;
+            trail.material.color = primaryColor;
+        });
+
+        document.getElementById('secondaryColor').addEventListener('input', (e) => {
+            secondaryColor.setStyle(e.target.value);
+        });
+
+        // HUD updates
+        function updateHUD() {
+            document.getElementById('coordinates').textContent = 
+                `${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}`;
+            document.getElementById('speed').textContent = controls.movementSpeed.toFixed(2);
+            document.getElementById('energy').textContent = 
+                `${Math.max(0, Math.min(100, 100 - (controls.movementSpeed - 100) / 5)).toFixed(0)}%`;
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animation loop
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            controls.update(delta);
+            
+            // Update light trail
+            trail.update(camera.position);
+            
+            // Update HUD
+            updateHUD();
+            
+            // Render with post-processing
+            composer.render();
+        }
+
+        // Keyboard controls for speed boost
+        document.addEventListener('keydown', (e) => {
+            if (e.shiftKey) {
+                controls.movementSpeed = 300;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (!e.shiftKey) {
+                controls.movementSpeed = 100;
+            }
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html> 

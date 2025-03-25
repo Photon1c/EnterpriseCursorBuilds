@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Earth - Wireframe Globe</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: monospace;
+            background: #000;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #hud {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            color: #00ff00;
+            font-family: monospace;
+            text-shadow: 0 0 5px #00ff00;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        #compass {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: #00ff00;
+            font-family: monospace;
+            text-shadow: 0 0 5px #00ff00;
+            text-align: right;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: monospace;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <div class="control-group">
+            Controls:<br>
+            WASD - Move<br>
+            Mouse - Look<br>
+            Q/E - Roll<br>
+            R/F - Altitude<br>
+            SHIFT - Boost
+        </div>
+    </div>
+    <div id="hud">
+        <div>ALT: <span id="altitude">0.00</span> KM</div>
+        <div>LAT: <span id="latitude">0.00</span>°</div>
+        <div>LON: <span id="longitude">0.00</span>°</div>
+        <div>SPD: <span id="speed">0.00</span> KM/H</div>
+    </div>
+    <div id="compass">
+        <div>HDG: <span id="heading">000</span>°</div>
+        <div>PITCH: <span id="pitch">00.0</span>°</div>
+        <div>ROLL: <span id="roll">00.0</span>°</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { FlyControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/FlyControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
+        camera.position.set(0, 0, 2000);
+        camera.lookAt(0, 0, 0);
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas'),
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Earth parameters
+        const EARTH_RADIUS = 1000;
+        const EARTH_SEGMENTS = 48;
+        const LINE_COLOR = 0x00ff00;
+
+        // Create Earth wireframe
+        function createEarthWireframe() {
+            const geometry = new THREE.SphereGeometry(EARTH_RADIUS, EARTH_SEGMENTS, EARTH_SEGMENTS);
+            const edges = new THREE.EdgesGeometry(geometry);
+            const material = new THREE.LineBasicMaterial({ color: LINE_COLOR });
+            return new THREE.LineSegments(edges, material);
+        }
+
+        // Create latitude/longitude grid
+        function createLatLonGrid() {
+            const group = new THREE.Group();
+            const material = new THREE.LineBasicMaterial({ 
+                color: LINE_COLOR,
+                transparent: true,
+                opacity: 0.3
+            });
+
+            // Create latitude lines
+            for(let lat = -80; lat <= 80; lat += 20) {
+                const radius = EARTH_RADIUS * Math.cos(lat * Math.PI / 180);
+                const height = EARTH_RADIUS * Math.sin(lat * Math.PI / 180);
+                const geometry = new THREE.CircleGeometry(radius, 48);
+                geometry.vertices = geometry.vertices || [];
+                const circle = new THREE.LineLoop(geometry, material);
+                circle.rotation.x = Math.PI / 2;
+                circle.position.y = height;
+                group.add(circle);
+            }
+
+            // Create longitude lines
+            for(let lon = 0; lon < 360; lon += 20) {
+                const points = [];
+                for(let lat = -90; lat <= 90; lat += 5) {
+                    const phi = (90 - lat) * Math.PI / 180;
+                    const theta = lon * Math.PI / 180;
+                    points.push(new THREE.Vector3(
+                        -EARTH_RADIUS * Math.sin(phi) * Math.cos(theta),
+                        EARTH_RADIUS * Math.cos(phi),
+                        EARTH_RADIUS * Math.sin(phi) * Math.sin(theta)
+                    ));
+                }
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, material);
+                group.add(line);
+            }
+
+            return group;
+        }
+
+        // Create Earth and grid
+        const earth = createEarthWireframe();
+        const grid = createLatLonGrid();
+        scene.add(earth);
+        scene.add(grid);
+
+        // Flight controls
+        const controls = new FlyControls(camera, renderer.domElement);
+        controls.movementSpeed = 100;
+        controls.rollSpeed = 0.5;
+        controls.dragToLook = true;
+
+        // Calculate lat/lon from camera position
+        function calculateLatLon(position) {
+            const radius = Math.sqrt(
+                position.x * position.x +
+                position.y * position.y +
+                position.z * position.z
+            );
+            
+            const lat = Math.asin(position.y / radius) * 180 / Math.PI;
+            const lon = Math.atan2(position.z, position.x) * 180 / Math.PI;
+            
+            return { lat, lon };
+        }
+
+        // Calculate aircraft orientation
+        function calculateOrientation(camera) {
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            
+            // Calculate heading (yaw)
+            const heading = (Math.atan2(direction.z, direction.x) * 180 / Math.PI + 90) % 360;
+            
+            // Calculate pitch
+            const pitch = Math.asin(direction.y) * 180 / Math.PI;
+            
+            // Calculate roll (this is approximate)
+            const roll = camera.rotation.z * 180 / Math.PI;
+            
+            return {
+                heading: heading < 0 ? heading + 360 : heading,
+                pitch,
+                roll
+            };
+        }
+
+        // HUD updates
+        function updateHUD() {
+            const position = camera.position;
+            const altitude = (Math.sqrt(
+                position.x * position.x +
+                position.y * position.y +
+                position.z * position.z
+            ) - EARTH_RADIUS).toFixed(2);
+            
+            const { lat, lon } = calculateLatLon(position);
+            const orientation = calculateOrientation(camera);
+            
+            document.getElementById('altitude').textContent = altitude;
+            document.getElementById('latitude').textContent = lat.toFixed(2);
+            document.getElementById('longitude').textContent = lon.toFixed(2);
+            document.getElementById('speed').textContent = controls.movementSpeed.toFixed(2);
+            document.getElementById('heading').textContent = orientation.heading.toFixed(0).padStart(3, '0');
+            document.getElementById('pitch').textContent = orientation.pitch.toFixed(1);
+            document.getElementById('roll').textContent = orientation.roll.toFixed(1);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Stars background
+        function createStars() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            for(let i = 0; i < 5000; i++) {
+                const radius = 10000;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                vertices.push(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.sin(phi) * Math.sin(theta),
+                    radius * Math.cos(phi)
+                );
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const material = new THREE.PointsMaterial({
+                color: 0x00ff00,
+                size: 1,
+                transparent: true,
+                opacity: 0.5
+            });
+            
+            return new THREE.Points(geometry, material);
+        }
+
+        // Add stars
+        scene.add(createStars());
+
+        // Animation loop
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            controls.update(delta);
+            updateHUD();
+            renderer.render(scene, camera);
+        }
+
+        // Speed boost controls
+        document.addEventListener('keydown', (e) => {
+            if (e.shiftKey) {
+                controls.movementSpeed = 300;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (!e.shiftKey) {
+                controls.movementSpeed = 100;
+            }
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html> 
