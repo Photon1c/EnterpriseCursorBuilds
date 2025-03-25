@@ -17,6 +17,14 @@ LLMs can be overlayed to interact and add more functionalities:
 
 ![EarthAgent](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/earth_agent.PNG)
 
-The most recent page aims to use an accurate human shape for the wireframe model, but for now  [this is a starting sample](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/earth_agent.PNG) script of the medical branch of this project:  
+The /medical folder📂 contains an attempt to use an approximate and not accurate human shape for the wireframe model, for now  [this is a starting sample](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/earth_agent.PNG) script of the medical branch of this project:  
 
 ![Medical](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/humanoidv1.PNG)
+
+The /dashboards folder 📂 contains template productivity dashboards with text, table, and chart rendering as well as a starting terminal / RSS feed module.   
+
+![Dashboards](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/work_dashb.PNG)  
+
+![Dashboard A](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/work_dash.PNG)
+
+
