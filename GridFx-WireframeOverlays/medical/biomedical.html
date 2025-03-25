@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biomedical Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: monospace;
+            background: #000;
+        }
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff00;
+            font-size: 24px;
+            text-shadow: 0 0 5px #00ff00;
+            z-index: 1000;
+        }
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+        }
+        select, button {
+            background: #000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            margin: 5px;
+            font-family: monospace;
+            cursor: pointer;
+        }
+        select:hover, button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-family: monospace;
+            text-shadow: 0 0 5px #00ff00;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="loading">INITIALIZING BIOMEDICAL SYSTEMS...</div>
+    <div id="controls">
+        <div>Theme:</div>
+        <select id="theme-select">
+            <option value="tron">Tron Theme</option>
+            <option value="escape">Escape Theme</option>
+        </select>
+        <div style="margin-top: 10px;">
+            <button id="reset-view">Reset View</button>
+            <button id="toggle-rotation">Toggle Rotation</button>
+        </div>
+    </div>
+    <div id="status">
+        <div>SYSTEM: <span id="system-status">ONLINE</span></div>
+        <div>ROTATION: <span id="rotation-status">0.00</span>°/s</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.set(0, 0, 1000);
+        camera.lookAt(0, 0, 0);
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('canvas'),
+            antialias: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Controls setup
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false;
+        controls.minDistance = 500;
+        controls.maxDistance = 2000;
+        controls.maxPolarAngle = Math.PI / 2;
+
+        // Theme settings
+        const themes = {
+            tron: {
+                color: 0x00ff00,
+                glowIntensity: 0.5,
+                gridColor: 0x00ff00,
+                gridOpacity: 0.2
+            },
+            escape: {
+                color: 0x00ffff,
+                glowIntensity: 0.3,
+                gridColor: 0x00ffff,
+                gridOpacity: 0.1
+            }
+        };
+
+        let currentTheme = 'tron';
+        let rotationSpeed = 0;
+
+        // Create human wireframe
+        function createHumanWireframe(theme) {
+            const color = themes[theme].color;
+            const material = new THREE.LineBasicMaterial({ color });
+
+            // Body parts
+            const parts = {
+                head: new THREE.SphereGeometry(50, 16, 16),
+                torso: new THREE.CylinderGeometry(40, 40, 120, 16),
+                leftArm: new THREE.CylinderGeometry(20, 20, 80, 16),
+                rightArm: new THREE.CylinderGeometry(20, 20, 80, 16),
+                leftLeg: new THREE.CylinderGeometry(25, 25, 100, 16),
+                rightLeg: new THREE.CylinderGeometry(25, 25, 100, 16)
+            };
+
+            // Create wireframes
+            const human = new THREE.Group();
+            
+            // Head
+            const headWireframe = new THREE.LineSegments(
+                new THREE.EdgesGeometry(parts.head),
+                material
+            );
+            headWireframe.position.y = 200;
+            human.add(headWireframe);
+
+            // Torso
+            const torsoWireframe = new THREE.LineSegments(
+                new THREE.EdgesGeometry(parts.torso),
+                material
+            );
+            torsoWireframe.position.y = 120;
+            human.add(torsoWireframe);
+
+            // Arms
+            const leftArmWireframe = new THREE.LineSegments(
+                new THREE.EdgesGeometry(parts.leftArm),
+                material
+            );
+            leftArmWireframe.position.set(-60, 160, 0);
+            leftArmWireframe.rotation.z = Math.PI / 2;
+            human.add(leftArmWireframe);
+
+            const rightArmWireframe = new THREE.LineSegments(
+                new THREE.EdgesGeometry(parts.rightArm),
+                material
+            );
+            rightArmWireframe.position.set(60, 160, 0);
+            rightArmWireframe.rotation.z = -Math.PI / 2;
+            human.add(rightArmWireframe);
+
+            // Legs
+            const leftLegWireframe = new THREE.LineSegments(
+                new THREE.EdgesGeometry(parts.leftLeg),
+                material
+            );
+            leftLegWireframe.position.set(-30, 0, 0);
+            human.add(leftLegWireframe);
+
+            const rightLegWireframe = new THREE.LineSegments(
+                new THREE.EdgesGeometry(parts.rightLeg),
+                material
+            );
+            rightLegWireframe.position.set(30, 0, 0);
+            human.add(rightLegWireframe);
+
+            return human;
+        }
+
+        // Create grid
+        function createGrid(theme) {
+            const color = themes[theme].gridColor;
+            const opacity = themes[theme].gridOpacity;
+            const size = 1000;
+            const divisions = 20;
+            const gridHelper = new THREE.GridHelper(size, divisions, color, color);
+            gridHelper.material.opacity = opacity;
+            gridHelper.material.transparent = true;
+            return gridHelper;
+        }
+
+        // Initialize scene
+        let human = createHumanWireframe(currentTheme);
+        let grid = createGrid(currentTheme);
+        scene.add(human);
+        scene.add(grid);
+
+        // Theme switching
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            currentTheme = e.target.value;
+            scene.remove(human);
+            scene.remove(grid);
+            human = createHumanWireframe(currentTheme);
+            grid = createGrid(currentTheme);
+            scene.add(human);
+            scene.add(grid);
+        });
+
+        // Reset view
+        document.getElementById('reset-view').addEventListener('click', () => {
+            camera.position.set(0, 0, 1000);
+            camera.lookAt(0, 0, 0);
+            controls.reset();
+        });
+
+        // Toggle rotation
+        document.getElementById('toggle-rotation').addEventListener('click', () => {
+            rotationSpeed = rotationSpeed === 0 ? 0.005 : 0;
+            document.getElementById('rotation-status').textContent = 
+                rotationSpeed === 0 ? '0.00' : '1.00';
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            if (rotationSpeed !== 0) {
+                human.rotation.y += rotationSpeed;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            document.getElementById('loading').style.display = 'none';
+            animate();
+        });
+    </script>
+</body>
+</html> 
