@@ -1,6 +1,6 @@
 ## Grid FX Wireframe Overlays
 
-This repository was inspired by *Escape from New York* and *Tron*.   
+This project was inspired by *Escape from New York* and *Tron*.   
 
 ![source](https://github.com/Photon1c/EnterpriseCursorBuilds/blob/main/GridFx-WireframeOverlays/media/glidergraphics_source.png)
 
