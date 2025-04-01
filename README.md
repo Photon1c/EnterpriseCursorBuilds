@@ -1,5 +1,7 @@
 # Enterprise Cursor Builds
-Space to store code produced by Cursor, GPT-4o and Claude.
+Space to store code produced by Cursor, GPT-4o and Claude.  
+
+The [Workflow Visualizer](https://github.com/Photon1c/EnterpriseCursorBuilds/tree/main/WorkflowVisualizer/visualizer) is a powerful Three.js productivity visualizer inspired by I Love Lucy. It is continually being updated and will eventually move to its own dedicated repository with the release of version 2.  
 
 The [Stock CSV Sentiment Forecaster](https://github.com/Photon1c/EnterpriseCursorBuilds/tree/main/stock_csv_sentiment_forecaster) is a tool to build subplot projections based on historical stock price data retrieved from Nasdaq.com.  
 
