@@ -88,6 +88,7 @@ This visualization is inspired by the famous chocolate factory scene from the 19
 
 - Three.js community for the excellent 3D web library
 - The timeless comedy of Lucille Ball for the inspiration
+- Cursor, GPT-4o, Claude, and Gemini working in sync together to process hundreds of conversations (orchestrated by user)
 
 ## 🎯 Features
 
