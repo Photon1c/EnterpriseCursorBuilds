@@ -1,0 +1,23 @@
+{
+  "name": "i-love-lucy-workflow-visualizer",
+  "version": "1.0.0",
+  "description": "A 3D workflow visualizer inspired by the 'I Love Lucy' chocolate factory scene",
+  "main": "serve.js",
+  "scripts": {
+    "start": "node serve.js",
+    "dev": "node serve.js"
+  },
+  "keywords": [
+    "three.js",
+    "workflow",
+    "visualization",
+    "3D",
+    "I Love Lucy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  }
+} 

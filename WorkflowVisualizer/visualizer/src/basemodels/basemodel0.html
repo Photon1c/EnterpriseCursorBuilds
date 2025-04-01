@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Love Lucy - Workflow Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="container">
+        <canvas id="scene"></canvas>
+        <div id="ui-overlay">
+            <div id="controls">
+                <button id="start-button">Start</button>
+                <button id="pause-button" disabled>Pause</button>
+                <div class="slider-container">
+                    <label for="speed-slider">Speed:</label>
+                    <input type="range" id="speed-slider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <div id="stats">
+                <div id="wrapped-count">Wrapped: 0</div>
+                <div id="missed-count">Missed: 0</div>
+                <div id="efficiency">Efficiency: 100%</div>
+            </div>
+            <div id="task-inspector" class="hidden">
+                <h3>Task Details</h3>
+                <div id="task-details"></div>
+                <button id="close-inspector">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="src/main.js"></script>
+</body>
+</html> 
