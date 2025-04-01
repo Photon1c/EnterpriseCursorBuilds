@@ -1,5 +1,7 @@
 # 🍫 I Love Lucy-Inspired Workflow Visualizer
 
+![ILL](src/assets/media/live-demo.gif)
+
 An interactive 3D visualization inspired by the classic "I Love Lucy" chocolate factory scene, demonstrating workplace expectations vs. reality through parallel simulations.
 
 ## ✨ Features
