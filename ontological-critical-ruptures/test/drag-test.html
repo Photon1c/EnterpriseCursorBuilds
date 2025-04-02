@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draggable & Resizable Panel Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .test-controls {
+            --panel-color: cyan;
+            --panel-color-rgb: 0, 255, 255;
+
+            position: absolute;
+            top: 150px;
+            left: 100px;
+            width: 400px;
+            min-width: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(var(--panel-color-rgb), 0.3);
+            border: 1px solid var(--panel-color);
+            resize: both;
+            overflow: auto;
+            z-index: 1000;
+        }
+
+        .panel-header {
+            padding: 15px;
+            background: rgba(var(--panel-color-rgb), 0.1);
+            border-bottom: 1px solid rgba(var(--panel-color-rgb), 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .panel-header::before {
+            content: "⋮⋮";
+            display: inline-block;
+            margin-right: 8px;
+            color: rgba(var(--panel-color-rgb), 0.7);
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .panel-title {
+            margin: 0;
+            color: var(--panel-color);
+            font-size: 20px;
+        }
+
+        .panel-content {
+            padding: 15px;
+        }
+
+        .panel-tooltip {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px 15px 15px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 1001;
+            border: 1px solid var(--panel-color);
+            box-shadow: 0 0 15px rgba(var(--panel-color-rgb), 0.3);
+            width: 280px;
+            text-align: center;
+            animation: float 2s infinite alternate ease-in-out;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        /* Add media query to adjust tooltip position on smaller screens */
+        @media (max-height: 400px) {
+            .panel-tooltip {
+                top: 110%;
+                max-height: 80px;
+            }
+        }
+
+        /* Ensure tooltip stays in viewport when panel is at the top */
+        .test-controls.at-top .panel-tooltip {
+            top: 110%;
+            bottom: auto;
+        }
+        .test-controls.at-top .panel-tooltip::after {
+            bottom: auto;
+            top: -10px;
+            border-top: none;
+            border-bottom: 10px solid rgba(0, 0, 0, 0.9);
+        }
+
+        .panel-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid rgba(0, 0, 0, 0.9);
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 50%, var(--panel-color) 50%);
+            z-index: 1001;
+            border-bottom-right-radius: 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .test-controls:hover .resize-handle {
+            opacity: 1;
+        }
+
+        .button {
+            padding: 8px 12px;
+            background: rgba(var(--panel-color-rgb), 0.2);
+            border: 1px solid rgba(var(--panel-color-rgb), 0.3);
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            background: rgba(var(--panel-color-rgb), 0.3);
+        }
+
+        .debug-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            z-index: 2000;
+        }
+
+        .dragging {
+            box-shadow: 0 0 20px rgba(var(--panel-color-rgb), 0.6);
+            opacity: 0.9;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateX(-50%) translateY(0);
+            }
+            100% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; margin-top: 20px;">Draggable & Resizable Panel Test</h1>
+    
+    <div id="panel" class="test-controls">
+        <div id="tooltip" class="panel-tooltip">
+            <p>✓ Panel can be dragged by the header</p>
+            <p>✓ Panel can be resized from the bottom corner</p>
+            <button class="button tooltip-button">Got it</button>
+        </div>
+        
+        <div id="header" class="panel-header">
+            <h2 class="panel-title">Draggable Panel</h2>
+            <button class="button">Reset Position</button>
+        </div>
+        
+        <div class="panel-content">
+            <p>This is a test panel that can be dragged and resized.</p>
+            <p>Try dragging it using the header at the top.</p>
+            <p>Try resizing it from the bottom-right corner.</p>
+            <p>This is separated from the main application for easier debugging.</p>
+        </div>
+        
+        <div class="resize-handle" title="Drag to resize panel"></div>
+    </div>
+    
+    <div class="debug-info">
+        <div>Position: <span id="position">100px, 100px</span></div>
+        <div>Size: <span id="size">400px x auto</span></div>
+        <div>Dragging: <span id="dragging">false</span></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const panel = document.getElementById('panel');
+            const header = document.getElementById('header');
+            const tooltip = document.getElementById('tooltip');
+            const tooltipButton = document.querySelector('.tooltip-button');
+            const resetButton = document.querySelector('.button:not(.tooltip-button)');
+            const positionDebug = document.getElementById('position');
+            const sizeDebug = document.getElementById('size');
+            const draggingDebug = document.getElementById('dragging');
+            
+            let isDragging = false;
+            let dragOffset = { x: 0, y: 0 };
+            
+            // Check if panel is too close to the top and adjust tooltip position
+            function checkPanelPosition() {
+                const rect = panel.getBoundingClientRect();
+                if (rect.top < 100) {
+                    panel.classList.add('at-top');
+                } else {
+                    panel.classList.remove('at-top');
+                }
+            }
+            
+            // Initial check of panel position
+            checkPanelPosition();
+            
+            // Hide tooltip when button is clicked
+            tooltipButton.addEventListener('click', function() {
+                tooltip.style.display = 'none';
+            });
+            
+            // Reset panel position when reset button is clicked
+            resetButton.addEventListener('click', function() {
+                panel.style.left = '100px';
+                panel.style.top = '150px';
+                updateDebugInfo();
+                checkPanelPosition();
+            });
+            
+            // Handle mouse down on header
+            header.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                panel.classList.add('dragging');
+                
+                const rect = panel.getBoundingClientRect();
+                dragOffset = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+                
+                draggingDebug.textContent = 'true';
+                e.preventDefault();
+            });
+            
+            // Handle mouse move
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                const newX = e.clientX - dragOffset.x;
+                const newY = e.clientY - dragOffset.y;
+                
+                // Prevent moving outside viewport
+                const maxX = window.innerWidth - panel.offsetWidth;
+                const maxY = window.innerHeight - panel.offsetHeight;
+                
+                panel.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+                panel.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+                
+                checkPanelPosition();
+                updateDebugInfo();
+            });
+            
+            // Handle mouse up
+            document.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    panel.classList.remove('dragging');
+                    draggingDebug.textContent = 'false';
+                }
+            });
+            
+            // Update debug info
+            function updateDebugInfo() {
+                const rect = panel.getBoundingClientRect();
+                positionDebug.textContent = `${parseInt(panel.style.left)}px, ${parseInt(panel.style.top)}px`;
+                sizeDebug.textContent = `${rect.width.toFixed(0)}px x ${rect.height.toFixed(0)}px`;
+            }
+            
+            // Update debug info on resize
+            const resizeObserver = new ResizeObserver(entries => {
+                updateDebugInfo();
+            });
+            
+            resizeObserver.observe(panel);
+            
+            // Initial debug info update
+            updateDebugInfo();
+        });
+    </script>
+</body>
+</html> 
