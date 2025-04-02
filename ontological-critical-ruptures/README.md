@@ -1,6 +1,6 @@
 # Ontological Critical Ruptures Project
 
-This is a separated React project that includes:
+This is a React project that includes:
 
 ## Components
 - Draggable and resizable control panel
@@ -17,9 +17,6 @@ This is a separated React project that includes:
 2. Run `npm install` to install dependencies 
 3. Run `npm run dev` to start the development server
 4. Open http://localhost:5173 in your browser
-
-## Testing Draggable Components
-Open the `test/drag-test.html` file directly in a browser to test the draggable panel functionality in isolation.
 
 ## Keyboard Shortcuts
 - Press 'I' for instructions
