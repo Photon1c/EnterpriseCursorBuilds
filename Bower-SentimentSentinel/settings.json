@@ -1,0 +1,11 @@
+{
+  "BASE_DIR": "Your:/Path",
+  "STREAM_URL": "https://www.youtube.com/your_url",
+  "REPORT_SUBDIR": "reports",
+  "RECORD_SECONDS": 30,
+  "INTERVAL_MINUTES": 15,
+  "KEYWORDS": [
+    "bullish", "bearish", "calls", "puts", "Google",
+    "Tesla", "option chain", "strike price", "volume"
+  ]
+}
