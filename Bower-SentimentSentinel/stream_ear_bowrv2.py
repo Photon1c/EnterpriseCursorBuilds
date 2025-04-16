@@ -1,3 +1,4 @@
+#This script will listen to Youtube stream, transcribe is using OpenAI's Whisper engine, and generate a log report of key words to monitor.
 import os
 import sys
 import subprocess
