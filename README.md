@@ -1,6 +1,56 @@
 # Enterprise Cursor Builds
 Space to store code produced by Cursor, GPT-4o and Claude.  
 
+<details><summary>Update 6.23.2025</summary>  
+  
+###  Updated Project Scope Map  
+
+```mermaid
+graph TD
+  Root[Dynamic Predictive Systems Family]
+
+  Root --> Flight[Flight Systems]
+  Flight --> PID[PID Controllers]
+  Flight --> Kalman[State Estimation]
+  Flight --> Dynamics[Fluid Dynamics]
+
+  Root --> Derivatives[Derivative Pricing Models]
+  Derivatives --> BSM[Black-Scholes]
+  Derivatives --> Heston[Heston Model]
+  Derivatives --> Monte[Monte Carlo Methods]
+
+  Root --> Weather[Weather Simulation Systems]
+  Weather --> NWP[Numerical Weather Prediction]
+  Weather --> Chaos[Chaos Theory]
+  Weather --> Thermo[Thermodynamics]
+
+  Root --> Missile[Missile Guidance Systems]
+  Missile --> Sensors[Sensor Fusion]
+  Missile --> Tracking[Predictive Tracking]
+  Missile --> Adversarial[Adversarial Conditions]
+
+  Root --> Robotics[AI Planning & Robotics]
+  Robotics --> Path[Pathfinding]
+  Robotics --> RL[Reinforcement Learning]
+  Robotics --> SLAM[SLAM Mapping]
+
+  Root --> Seismic[Seismic & Structural Models]
+  Seismic --> Rupture[Critical Rupture Models]
+  Seismic --> Resonance[Resonance Behavior]
+
+  Root --> Epidemic[Epidemic Forecasting]
+  Epidemic --> SIR[SIR/SEIR Models]
+  Epidemic --> Interventions[Intervention Models]
+
+  Root --> Quantum[Quantum Systems]
+  Quantum --> Qubit[Qubit Decoherence]
+  Quantum --> Tunneling[Quantum Tunneling]
+  Quantum --> Uncertainty[Uncertainty Modeling]
+```
+
+</details>
+
+
 The [Workflow Visualizer](https://github.com/Photon1c/EnterpriseCursorBuilds/tree/main/WorkflowVisualizer/visualizer) is a powerful Three.js productivity visualizer inspired by I Love Lucy. It is continually being updated and will eventually move to its own dedicated repository with the release of version 2.  
 
 The [Ontological Critical Ruptures](/ontological-critical-ruptures) project compares critical rupture event dynamics in stocks, matter states, and immunology.  
